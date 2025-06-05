@@ -18,9 +18,10 @@ lines(ts, hs)
     g ~ InverseGamma(2, 3)
     h₀ ~ Uniform(0, 100)
     σ² ~ InverseGamma(2, 3)
-    μ = h₀ .- g/2*ts.^2 
+    σ = sqrt(σ²)
+    μ = h.(ts, h₀, g)
     for i in eachindex(hs)
-        hs[i] ~ Normal(μ[i], sqrt(σ²))
+        hs[i] ~ Normal(μ[i], σ)
     end
 end
 model = bmodel(ts, hs)
