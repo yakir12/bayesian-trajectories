@@ -3,7 +3,7 @@ using Distributions, StaticArrays, GLMakie, AlgebraOfGraphics, Turing
 const SV = SVector{2, Float64}
 
 d = VonMises(0.3, 5)
-n = 100
+n = 10000
 
 xys = Vector{SV}(undef, n)
 xys[1] = zero(SV)
@@ -12,17 +12,24 @@ for i in 2:n
 end
 lines(xys, axis = (; aspect = DataAspect()))
 
-@model function bmodel(xs)
-    μ ~ VonMises(0, 0.1)
-    κ ~ InverseGamma(3, 5)
-    Δs = diff(xs)
-    αs = [atan(reverse(Δ)...) for Δ in Δs]
-    for i in 1:length(αs)
+Δs = diff(xys)
+αs = [atan(reverse(Δ)...) for Δ in Δs]
+hist(αs)
+
+
+@model function bmodel(αs)
+    μ ~ VonMises(0.3, 1)
+    κ ~ InverseGamma(10, 55)
+    for i in eachindex(αs)
         αs[i] ~ VonMises(μ, κ)
     end
 end
 
-chain = sample(bmodel(xys), NUTS(), 10_000, progress=false)
+model = bmodel(αs)
+
+chain = sample(model, Prior(), MCMCThreads(), 1000, 4)
+
+chain = sample(model, NUTS(), MCMCThreads(), 1000, 4)
 
 fig = Figure()
 for (i, var_name) in enumerate(chain.name_map.parameters)
@@ -35,3 +42,16 @@ for (i, var_name) in enumerate(chain.name_map.parameters)
     )
 end
 
+# MWE issue #2584
+using Turing
+@model function bmodel(αs)
+    μ ~ Uniform(-π, π)
+    κ ~ InverseGamma(2, 3)
+    for i in eachindex(αs)
+        αs[i] ~ VonMises(μ, κ) # doesn't work
+        # αs[i] ~ Normal(μ, κ) # works
+    end
+end
+x = rand(VonMises(0.3, 3), 100)
+model = bmodel(x)
+chain = sample(model, NUTS(), 1000)
