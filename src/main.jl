@@ -55,3 +55,17 @@ end
 x = rand(VonMises(0.3, 3), 100)
 model = bmodel(x)
 chain = sample(model, NUTS(), 1000)
+
+# simplified MWE
+
+using Turing
+@model function bmodel(α)
+    μ ~ Uniform(-π, π)
+    κ ~ InverseGamma(2, 3)
+    α ~ VonMises(μ, κ) # doesn't work
+    # α ~ Normal(μ, κ) # works
+end
+x = rand(VonMises(0.3, 3))
+model = bmodel(x)
+chain = sample(model, NUTS(), 1000)
+
