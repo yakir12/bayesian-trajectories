@@ -125,6 +125,10 @@ function Distributions.rand(rng::AbstractRNG, d::BeetleAngle)
     return θs
 end
 
+beetle_pdf(φ) = (1/2π) · I₀(R(φ)) / [I₀(κ₁)·I₀(κ₂)]
+
+    # R(φ) = |w·κ₁·e^(i·φ) + (1-w)·κ₂·e^(i·(φ-θ))|
+    # I₀ is the modified Bessel function of the first kind
 
 d = BeetleAngle(0.2, 0.4, 0.9, 10)
 θs = rand(Xoshiro(0), d)
