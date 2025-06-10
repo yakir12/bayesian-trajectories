@@ -97,7 +97,7 @@
 #
 ###
 
-using Distributions, Random, KernelDensity, Turing, GLMakie, AlgebraOfGraphics
+using Distributions, Random, KernelDensity, Turing, GLMakie, AlgebraOfGraphics, ProgressMeter
 
 # struct BeetleAngle <: ContinuousMultivariateDistribution 
 #     brw::Truncated{Normal{Float64}, Continuous, Float64, Float64, Float64}
@@ -114,9 +114,9 @@ struct BeetleAngle <: ContinuousMultivariateDistribution
     # crw::VonMises{Float64}
     w::Float64
     n::Int
-    BeetleAngle(brwκ, crwκ, w, n::Int) = new(Normal(0.0, brwκ), Normal(0.0, crwκ), w, n)
+    # BeetleAngle(brwκ, crwκ, w, n::Int) = new(Normal(0.0, brwκ), Normal(0.0, crwκ), w, n)
     # BeetleAngle(brwκ, crwκ, w, n::Int) = new(Truncated(Normal(0.0, brwκ), -π, π), Truncated(Normal(0.0, crwκ), -π, π), w, n)
-    # BeetleAngle(brwκ, crwκ, w, n::Int) = new(VonMises(brwκ), VonMises(crwκ), w, n)
+    BeetleAngle(brwκ, crwκ, w, n::Int) = new(VonMises(brwκ), VonMises(crwκ), w, n)
 end
 
 struct Track <: ContinuousMultivariateDistribution 
@@ -157,7 +157,6 @@ function transition_density(t::Track, prev_θ, θ)
         y, x = @. t.wbrwyx[i] + (1 - t.d.w)*crwyx
         t.xs[i] = atan.(y, x)
     end
-    @show t.xs
     kded = kde(t.xs,  boundary = (-π, π))
     return pdf(kded, θ)
 end
@@ -182,33 +181,63 @@ function next_step(brwθ, crwθ, w, prev_θ)
     return atan(y, x)
 end
 
+brwκ = 100
+crwκ = 3
+w = 1
+d = BeetleAngle(brwκ, crwκ, w, 100)
+θs = rand(Xoshiro(0), d)
+
+xy = cumsum([Point2f(reverse(sincos(θ))) for θ in θs])
+lines(xy, axis = (;autolimitaspect = 1))
+
+n = 11
+brwκs = range(brwκ - 5, brwκ + 5, n)
+crwκs = range(crwκ - 2, crwκ + 2, n)
+p = zeros(n, n)
+h = Progress(n*n)
+Threads.@threads for ij in 1:n*n
+    i, j = Tuple(CartesianIndices((n , n))[ij])
+    d = BeetleAngle(brwκs[i], crwκs[j], w, length(θs))
+    t = Track(d, 100000)
+    p[j, i] = logpdf(t, θs)
+    next!(h)
+end
+finish!(h)
+
+heatmap(brwκs, crwκs, p)
+scatter!(brwκ, crwκ)
+
+#
+# dshfkshfdshfsf
 
 @model function bmodel(θs)
     brwκ ~ InverseGamma(2)
     crwκ ~ InverseGamma(2)
     d = BeetleAngle(brwκ, crwκ, 0.5, length(θs))
-    t = Track(d, 10)
-    θs ~ t
+    t = Track(d, 10000)
+    Turing.@addlogprob! logpdf(t, θs)
 end
 
-d = BeetleAngle(0.2, 0.4, 0.5, 10)
+d = BeetleAngle(20, 40, 0.5, 10)
 θs = rand(Xoshiro(0), d)
 model = bmodel(θs)
 
+using SliceSampling
+
 # chain = sample(model, NUTS(), MCMCThreads(), 1000, 4)
-chain = sample(model, NUTS(), 1000)
+chain = sample(model, Gibbs(), 10000)
 
 fig = Figure()
 for (i, var_name) in enumerate(chain.name_map.parameters)
     draw!(
-        fig[i, 1],
-        data(chain) *
-        mapping(var_name; color=:chain => nonnumeric) *
-        AlgebraOfGraphics.density() *
-        visual(fillalpha=0)
-    )
+          fig[i, 1],
+          data(chain) *
+          mapping(var_name; color=:chain => nonnumeric) *
+          AlgebraOfGraphics.density() *
+          visual(fillalpha=0)
+         )
 end
-
+fig
 
 
 # using GLMakie
@@ -223,3 +252,5 @@ end
 # lines(xy)
 # sum(norm.(diff(xy)))
 #
+
+
