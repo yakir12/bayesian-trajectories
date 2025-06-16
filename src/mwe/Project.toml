@@ -1,0 +1,9 @@
+[deps]
+AlgebraOfGraphics = "cbdf2221-f076-402e-a563-3d30da359d67"
+ApproxFun = "28f2ccd6-bb30-5033-b560-165f7b14dc2f"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+HypothesisTests = "09f84164-cd44-5f33-b23f-e6b0d136a0d5"
+IntervalArithmetic = "d1acc4aa-44c8-5952-acd4-ba5d80a2a253"
+IntervalRootFinding = "d2bf35a9-74e0-55ec-b149-d360ff49b807"
+ProgressMeter = "92933f4c-e287-5a05-a399-4b506db050ca"
+Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
