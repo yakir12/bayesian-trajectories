@@ -27,17 +27,29 @@ function inext_step(crwθ, w, prev_θ, θ)
 end
 
 # ###
-#
-# crwθ = 3.
-# w = 0.5
-# prev_θ = 0.2
-# θ = 0.3
-# Δθ(brwθ) = atan(((1 - w)*sin(crwθ + prev_θ) + w*sin(brwθ)) / ((1 - w)*cos(crwθ + prev_θ) + w*cos(brwθ))) - θ
-# brwθ = range(-pi, pi, 100)
-# y = Δθ.(brwθ)
-# lines(brwθ, y)
-# hlines!(0)
-#
+
+crwθ = 0.3
+w = 0.1
+prev_θ = 0.2
+θ = 0.3
+Δθ(brwθ, crwθ) = atan(((1 - w)*sin(crwθ + prev_θ) + w*sin(brwθ)) / ((1 - w)*cos(crwθ + prev_θ) + w*cos(brwθ))) - θ
+Δθ(cb) = atan(((1 - w)*sin(cb[2] + prev_θ) + w*sin(cb[1])) / ((1 - w)*cos(cb[2] + prev_θ) + w*cos(cb[1]))) - θ
+o = Optim.optimize(abs ∘ Δθ, [-pi, -pi], [pi, pi], [0., 0.])
+
+
+brwθ = range(-pi, pi, 100)
+crwθ = range(-pi, pi, 100)
+y = Δθ.(brwθ, crwθ')
+
+contour(brwθ, crwθ, y, levels = [0])
+scatter!(Point2f(o.minimizer))
+
+Δθ((brwθ, crwθ)) = [atan(((1 - w)*sin(crwθ + prev_θ) + w*sin(brwθ)) / ((1 - w)*cos(crwθ + prev_θ) + w*cos(brwθ))) - θ]
+rts = IntervalRootFinding.roots(Δθ, [interval(-pi, pi), interval(-pi, pi)])
+
+Δθ(1.8, -0.1)
+
+
 # ###
 
 TN(μ, σ, m, M) = Truncated(Normal(μ, σ), m, M)
@@ -83,7 +95,7 @@ function eachsstep(crw, w, θs)
     return (brwθs, crwθs)
 end
 
-σ_cf = 0.2
+σ_cf = 0.1
 crw = TN(σ_cf)
 
 brwθs, crwθs = eachsstep(crw, w, θs)
