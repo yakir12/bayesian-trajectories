@@ -28,6 +28,7 @@ function inext_step(crwθ, w, prev_θ, θ)
 end
 
 # ###
+# the main idea is to have an inverse version of the Orit model, where given a motor error (randomly sampled from a pre-chosen distribution), a globally constant weight `w`, the known previous step angle `prev_θ`, give me the compass error that would have resulted the resulting step angle `θ`. So if we have a process that had a certain motor error distribution, then it should result in a certain compass error distribution, and the properties of these ditributions might be useful in determining if the fit it good.
 
 crwθ = 0.3
 w = 0.1
