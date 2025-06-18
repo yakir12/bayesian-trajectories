@@ -1,5 +1,6 @@
 using IntervalArithmetic, IntervalArithmetic.Symbols, IntervalRootFinding
 using Turing, Random, GLMakie, ProgressMeter, AlgebraOfGraphics
+using Optim
 # using ApproxFun
 # import ApproxFun:(..)
 
